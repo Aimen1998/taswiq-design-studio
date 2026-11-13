@@ -29,7 +29,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy": "npm run build && wrangler deploy"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -57,6 +58,7 @@
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vite": "8.2.2",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "wrangler": "4.125.0"
   }
 }

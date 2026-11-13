@@ -42,7 +42,7 @@ function App() {
     <StudioProvider host={host}>
       <div className="min-h-dvh bg-background text-foreground">
         <header className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
-          <a href="https://taswiq.store" className="me-auto text-lg font-black text-brand">TaswiQ Studio</a>
+          <a href="/" className="me-auto text-lg font-black text-brand">TaswiQ Studio</a>
           <div className="flex gap-1" role="group" aria-label="Language">
             {LANGS.map((l) => <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => setLang(l.id)} className={`min-h-11 rounded-full px-3 text-sm font-bold ${lang === l.id ? "bg-foreground text-background" : "border border-border bg-card"}`}>{l.label}</button>)}
           </div>

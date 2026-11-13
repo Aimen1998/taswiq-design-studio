@@ -57,7 +57,7 @@ import { Studio, StudioProvider } from "@taswiq/design-studio";
 
 ### المساهمة
 
-نرحب بكل مساهمة. اقرأ [CONTRIBUTING.md](CONTRIBUTING.md): كل تغيير يحتاج اختباراً، ويمر بفحص الأنواع والبناء وgitleaks.
+نرحب بكل مساهمة. اقرأ [CONTRIBUTING.md](CONTRIBUTING.md): كل تغيير يحتاج اختباراً، ويمر بفحص الأنواع والبناء وgitleaks. وقّع [اتفاقية المساهمة](CLA.md) مرة واحدة في أول طلب دمج.
 
 ### الرخصة
 
@@ -108,7 +108,7 @@ import { Studio, StudioProvider } from "@taswiq/design-studio";
 
 ### Contributing
 
-Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Every change needs a test and must pass typecheck, build and gitleaks.
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Every change needs a test and must pass typecheck, build and gitleaks. Sign the [Contributor License Agreement](CLA.md) once, on your first pull request.
 
 ### License
 

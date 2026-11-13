@@ -3,11 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="TaswiQ Studio: make an ad for your product in minutes, in your browser. Free and open source." />
-    <title>TaswiQ Studio</title>
+    <title>TaswiQ Studio · صمّم إعلاناً لمنتجك في دقائق</title>
+    <meta name="description" content="صمّم إعلاناً لمنتجك في دقائق، داخل متصفحك: 3 تصاميم فورية، وحذف الخلفية على جهازك، وتنزيل للفيسبوك وإنستغرام والقصص. مجاني ومفتوح المصدر، بلا حساب." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content="TaswiQ Studio" />
+    <meta property="og:description" content="Make an ad for your product in minutes, in your browser. Free and open source." />
+    <meta property="og:image" content="/hero-ad.webp" />
+    <link rel="preload" as="image" href="/hero-ad.webp" type="image/webp" />
   </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./main.tsx"></script>
+  <body class="min-h-dvh bg-background text-foreground">
+    <header class="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-4">
+      <a href="/" class="me-auto text-lg font-black text-brand">TaswiQ Studio</a>
+      <nav class="flex gap-1" aria-label="Language">
+        <button type="button" data-lang="ar" class="min-h-11 rounded-full border border-border bg-card px-3 text-sm font-bold">العربية</button>
+        <button type="button" data-lang="fr" class="min-h-11 rounded-full border border-border bg-card px-3 text-sm font-bold">Français</button>
+        <button type="button" data-lang="en" class="min-h-11 rounded-full border border-border bg-card px-3 text-sm font-bold">English</button>
+      </nav>
+    </header>
+    <main class="mx-auto grid max-w-5xl gap-10 px-4 pb-12">
+      <section class="grid items-center gap-8 md:grid-cols-[1.1fr_0.9fr]">
+        <div class="grid gap-5">
+          <h1 class="text-4xl leading-tight font-black md:text-5xl" data-t="title">صمّم إعلاناً لمنتجك في دقائق</h1>
+          <p class="text-lg text-muted-foreground" data-t="lead">اختر صورة منتجك فنجهّز لك 3 تصاميم فورية لفيسبوك وإنستغرام والقصص. عدّل النص والألوان، واحذف الخلفية، ثم حمّل الصورة أو شاركها على واتساب.</p>
+          <div class="flex flex-wrap gap-3">
+            <a href="/editor/" class="inline-flex min-h-12 items-center rounded-xl bg-brand px-6 text-base font-black text-white" data-t="open">افتح المحرر</a>
+            <a href="https://taswiq.store" class="inline-flex min-h-12 items-center rounded-xl border border-border bg-card px-5 text-base font-bold" data-t="more">صمّم أكثر مع متجرك على TaswiQ</a>
+          </div>
+          <p class="text-sm text-muted-foreground" data-t="free">مجاني ومفتوح المصدر. بلا حساب، وتصاميمك تبقى في متصفحك.</p>
+        </div>
+        <img src="/hero-ad.webp" width="540" height="540" alt="إعلان صُمّم بالاستوديو: عطر بسعره بالدينار وزر «اطلب الآن»" class="mx-auto w-full max-w-sm rounded-3xl shadow-xl" data-t-alt="alt" fetchpriority="high" />
+      </section>
+      <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-labelledby="f-title">
+        <h2 id="f-title" class="sr-only" data-t="features">المزايا</h2>
+        <article class="rounded-2xl border border-border bg-card p-4"><h3 class="font-black" data-t="f1">3 تصاميم فورية</h3><p class="text-sm text-muted-foreground" data-t="f1d">من اسم منتجك وسعره وصورته، و15 قالباً جاهزاً.</p></article>
+        <article class="rounded-2xl border border-border bg-card p-4"><h3 class="font-black" data-t="f2">حذف الخلفية على جهازك</h3><p class="text-sm text-muted-foreground" data-t="f2d">تعمل داخل المتصفح، فلا تُرسل صورتك إلى أي خادم.</p></article>
+        <article class="rounded-2xl border border-border bg-card p-4"><h3 class="font-black" data-t="f3">كل المقاسات</h3><p class="text-sm text-muted-foreground" data-t="f3d">1:1 و4:5 و9:16 مع مناطق القصص الآمنة، وتنزيل PNG وJPG.</p></article>
+        <article class="rounded-2xl border border-border bg-card p-4"><h3 class="font-black" data-t="f4">عربي أولاً</h3><p class="text-sm text-muted-foreground" data-t="f4d">خطوط عربية مفتوحة، ونص من اليمين، والسعر بالدينار.</p></article>
+      </section>
+    </main>
+    <footer class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-4 py-6 text-sm text-muted-foreground">
+      <a class="font-bold text-brand underline" href="https://taswiq.store" data-t="try">جرّب TaswiQ: متجرك للدفع عند الاستلام</a>
+      <a class="underline" href="https://github.com/Aimen1998/taswiq-design-studio">GitHub · AGPL-3.0</a>
+      <span data-t="privacy">لا تتبع ولا ملفات تعريف: لا نجمع أي بيانات عنك.</span>
+    </footer>
+    <script type="module" src="./landing.ts"></script>
   </body>
 </html>
