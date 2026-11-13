@@ -1,6 +1,6 @@
 # Individual Contributor License Agreement · اتفاقية المساهمة الفردية
 
-Version 1.0 — 2026-11-13 · الإصدار 1.0
+Version 1.1 — 2026-11-13 · الإصدار 1.1
 
 [English](#english) · [العربية](#العربية)
 
@@ -15,7 +15,8 @@ however you like.
 **1. Definitions.** "You" means the individual who submits a Contribution. "Maintainer" means **ABIDAT AIMEN**,
 the copyright holder of the Project, and anyone the Maintainer transfers the Project to. "Contribution" means any
 original work (code, documentation, designs, translations, pictures or other material) that You submit to the
-Project, for example by pull request, patch, issue or comment, from the moment You accept this Agreement.
+Project, for example by pull request, patch, issue or comment — **including every Contribution You submitted
+before accepting this Agreement, and the pull request on which You sign it**, and every later one.
 
 **2. Copyright licence.** You grant the Maintainer a perpetual, worldwide, non-exclusive, no-charge, royalty-free,
 irrevocable licence to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense and
@@ -59,7 +60,7 @@ Contributions to the Project.
 **1. التعريفات.**
 - **«أنت»:** الشخص الذي يقدّم المساهمة.
 - **«المسؤول»:** **ABIDAT AIMEN** (عبيدات أيمن)، صاحب حقوق المشروع، ومن يُنقل إليه المشروع لاحقاً.
-- **«المساهمة»:** كل عمل أصلي تقدّمه للمشروع منذ قبولك هذه الاتفاقية، سواء كان كوداً أو وثائق أو تصاميم أو ترجمات أو صوراً، عبر طلب دمج أو تعديل أو بلاغ أو تعليق.
+- **«المساهمة»:** كل عمل أصلي تقدّمه للمشروع، سواء كان كوداً أو وثائق أو تصاميم أو ترجمات أو صوراً، عبر طلب دمج أو تعديل أو بلاغ أو تعليق. **ويشمل ذلك كل ما قدّمته قبل قبول الاتفاقية، وطلب الدمج الذي توقّع فيه**، وكل ما تقدّمه بعده.
 
 **2. ترخيص حق المؤلف.** تمنح المسؤول ترخيصاً دائماً وعالمياً وغير حصري ومجانياً وغير قابل للإلغاء، بأن:
 - ينسخ مساهماتك.

@@ -1,0 +1,4 @@
+# Changes to workflows and repository settings need the owner.
+/.github/ @Aimen1998
+/CLA.md @Aimen1998
+/wrangler.jsonc @Aimen1998

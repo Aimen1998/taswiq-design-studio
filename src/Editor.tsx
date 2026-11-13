@@ -350,7 +350,9 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
   const usesSample = useMemo(() => { const walk = (os: Obj[]): boolean => os.some((o) => (typeof o.src === "string" && o.src.startsWith("/studio/samples/")) || (Array.isArray(o.objects) && walk(o.objects))); return walk(design.objects); }, [design]);
   async function putOwnPhoto(file: File) {
     await run(async () => {
-      const up = await host.assets.upload(file);
+      let up: { key: string; url: string };
+      try { up = await host.assets.upload(file); }
+      catch (e: any) { notify.error(e?.status === 413 || e?.status === 422 ? s("photo_too_big") : s("photo_wrong_type")); return; }
       signed.current[up.key] = up.url;
       const d = current();
       const swap = (os: Obj[]): Obj[] => os.map((o) => (typeof o.src === "string" && o.src.startsWith("/studio/samples/") ? { ...unlink(o), src: up.key } : Array.isArray(o.objects) ? { ...o, objects: swap(o.objects) } : o));

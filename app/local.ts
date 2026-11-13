@@ -87,11 +87,28 @@ const urls = new Map<string, string>();
 const TYPES: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" };
 export const MAX_LOCAL_PICTURE = 8 * 1024 * 1024;
 
+export const MAX_LOCAL_SIDE = 4096;
+/** The real type from the first bytes (never the name or the browser's guess): PNG, JPEG or WebP only. */
+async function sniff(blob: Blob): Promise<string | null> {
+  const b = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (String.fromCharCode(...b.slice(0, 4)) === "RIFF" && String.fromCharCode(...b.slice(8, 12)) === "WEBP") return "image/webp";
+  return null;
+}
+
 export const localAssets: AssetStore = {
-  async upload(blob) {
-    const ext = TYPES[blob.type];
-    if (!ext) throw Object.assign(new Error("Only PNG, JPEG or WebP pictures"), { status: 415 });
-    if (blob.size > MAX_LOCAL_PICTURE) throw Object.assign(new Error("Picture too large"), { status: 413 });
+  async upload(raw) {
+    if (raw.size > MAX_LOCAL_PICTURE) throw Object.assign(new Error("Picture too large"), { status: 413 });
+    const type = await sniff(raw);
+    const ext = type ? TYPES[type] : undefined;
+    if (!type || !ext) throw Object.assign(new Error("Only PNG, JPEG or WebP pictures"), { status: 415 });
+    const blob = raw.type === type ? raw : new Blob([raw], { type });
+    const bitmap = await createImageBitmap(blob).catch(() => null);
+    if (!bitmap) throw Object.assign(new Error("This picture cannot be read"), { status: 415 });
+    const big = bitmap.width > MAX_LOCAL_SIDE || bitmap.height > MAX_LOCAL_SIDE;
+    bitmap.close();
+    if (big) throw Object.assign(new Error("Picture too big in pixels"), { status: 422 });
     const key = `studio:local/${hex(16)}.${ext}`;
     await tx("assets", "readwrite", (s) => s.put({ key, blob, bytes: blob.size } satisfies AssetRecord));
     const url = URL.createObjectURL(blob);
