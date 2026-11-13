@@ -14,11 +14,16 @@ export function removeBackground(blob: Blob, modelUrl: string, onStage: (s: Stag
   const id = ++seq;
   return new Promise(async (resolve, reject) => {
     const bitmap = await createImageBitmap(blob, { imageOrientation: "from-image" } as any);
-    const timer = setTimeout(() => { worker?.terminate(); worker = null; reject(new Error("too_slow")); }, TOO_SLOW_MS);
+    // The limit times the removal itself, not the first download of the model on a slow connection.
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const listen = (e: MessageEvent) => {
       if (e.data?.id !== id) return;
-      if (e.data.stage) { onStage(e.data.stage); return; }
-      clearTimeout(timer);
+      if (e.data.stage) {
+        onStage(e.data.stage);
+        if (e.data.stage === "run" && !timer) timer = setTimeout(() => { worker?.terminate(); worker = null; reject(new Error("too_slow")); }, TOO_SLOW_MS);
+        return;
+      }
+      if (timer) clearTimeout(timer);
       worker?.removeEventListener("message", listen);
       if (e.data.error) reject(new Error(e.data.error)); else resolve({ mask: e.data.mask, size: e.data.size });
     };
