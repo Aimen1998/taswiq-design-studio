@@ -12,8 +12,7 @@ const LOCAL: Record<Lang, string> = { ar: "تصاميمك محفوظة في هذ
 
 function firstLang(): Lang {
   try { const saved = localStorage.getItem("design-studio:lang"); if (saved === "ar" || saved === "fr" || saved === "en") return saved; } catch {}
-  const n = (navigator.language || "ar").slice(0, 2);
-  return n === "fr" ? "fr" : n === "en" ? "en" : "ar";
+  return "ar";
 }
 
 type Toast = { id: number; text: string; tone: "ok" | "error"; action?: { label: string; run: () => void } };

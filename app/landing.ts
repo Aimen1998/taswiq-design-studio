@@ -40,8 +40,7 @@ const T: Record<Lang, Record<string, string>> = {
 
 function first(): Lang {
   try { const s = localStorage.getItem("design-studio:lang"); if (s === "ar" || s === "fr" || s === "en") return s; } catch {}
-  const n = (navigator.language || "ar").slice(0, 2);
-  return n === "fr" ? "fr" : n === "en" ? "en" : "ar";
+  return "ar";
 }
 
 function apply(lang: Lang) {
@@ -56,8 +55,11 @@ function apply(lang: Lang) {
     b.classList.toggle("bg-foreground", on); b.classList.toggle("text-background", on); b.classList.toggle("bg-card", !on);
   });
   document.title = `TaswiQ Studio · ${t.title}`;
+}
+function choose(lang: Lang) {
   try { localStorage.setItem("design-studio:lang", lang); } catch {}
+  apply(lang);
 }
 
-document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => b.addEventListener("click", () => apply(b.dataset.lang as Lang)));
+document.querySelectorAll<HTMLButtonElement>("[data-lang]").forEach((b) => b.addEventListener("click", () => choose(b.dataset.lang as Lang)));
 apply(first());
