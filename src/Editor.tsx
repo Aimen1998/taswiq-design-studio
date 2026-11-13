@@ -141,6 +141,12 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
           }
         } catch (e: any) {
           const code = Number(e?.status ?? 0);
+          if (e?.quota) {
+            pending.current ??= d;
+            setStatus("rejected");
+            notify.error(s("save_storage_full"));
+            return;
+          }
           if (code >= 400 && code < 500 && code !== 408 && code !== 429) {
             // The server refused this version (too long, plan limit): retrying cannot help, so say why and stop.
             pending.current ??= d;

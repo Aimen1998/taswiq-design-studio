@@ -19,13 +19,21 @@ function open(): Promise<IDBDatabase> {
     req.onerror = () => reject(req.error);
   });
 }
+/** Resolves only when the transaction is committed: a write that the browser later aborts (full storage) is an error. */
 async function tx<T>(store: "designs" | "assets", mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
   const db = await open();
   return new Promise<T>((resolve, reject) => {
     const t = db.transaction(store, mode);
+    let result: T;
     const req = run(t.objectStore(store));
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { result = req.result; };
+    const fail = () => {
+      const err = t.error ?? req.error;
+      reject(err?.name === "QuotaExceededError" ? Object.assign(new Error("This browser's storage is full"), { status: 507, quota: true }) : err ?? new Error("storage failed"));
+    };
+    t.oncomplete = () => resolve(result);
+    t.onerror = fail;
+    t.onabort = fail;
   });
 }
 

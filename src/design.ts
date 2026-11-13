@@ -34,11 +34,11 @@ export function allowedImageSrc(src: unknown): boolean {
   return /^\/studio\/samples\/[a-z0-9-]{2,40}\.webp$/.test(src);
 }
 export interface CheckOptions { allowImage?: (src: unknown) => boolean }
-let imageCheck: (src: unknown) => boolean = allowedImageSrc;
+type ImageCheck = (src: unknown) => boolean;
 
 export type Problem = { path: string; reason: string };
 
-function checkValue(key: string, v: unknown, path: string, out: Problem[]) {
+function checkValue(key: string, v: unknown, path: string, out: Problem[], imageCheck: ImageCheck) {
   const num = (min: number, max: number) => {
     if (typeof v !== "number" || !Number.isFinite(v) || v < min || v > max) out.push({ path, reason: `${key} out of range` });
   };
@@ -77,7 +77,7 @@ function checkValue(key: string, v: unknown, path: string, out: Problem[]) {
   }
 }
 
-function walk(objects: unknown, path: string, depth: number, out: Problem[], count: { n: number }) {
+function walk(objects: unknown, path: string, depth: number, out: Problem[], count: { n: number }, imageCheck: ImageCheck) {
   if (!Array.isArray(objects)) { out.push({ path, reason: "objects must be a list" }); return; }
   for (const [i, o] of objects.entries()) {
     const at = `${path}[${i}]`;
@@ -90,10 +90,10 @@ function walk(objects: unknown, path: string, depth: number, out: Problem[], cou
       if (k === "objects") {
         if (type !== "group") { out.push({ path: `${at}.objects`, reason: "only groups hold elements" }); continue; }
         if (depth >= MAX_DEPTH) { out.push({ path: at, reason: "groups nested too deep" }); continue; }
-        walk(v, `${at}.objects`, depth + 1, out, count);
+        walk(v, `${at}.objects`, depth + 1, out, count, imageCheck);
       } else if (k === "clipPath") {
-        if (v !== null) walk([v], `${at}.clipPath`, depth + 1, out, count);
-      } else checkValue(k, v, `${at}.${k}`, out);
+        if (v !== null) walk([v], `${at}.clipPath`, depth + 1, out, count, imageCheck);
+      } else checkValue(k, v, `${at}.${k}`, out, imageCheck);
     }
     if (type === "image" && !imageCheck((o as any).src)) out.push({ path: `${at}.src`, reason: "image source not allowed" });
   }
@@ -109,7 +109,7 @@ export interface Design {
 
 /** null when the design is safe to store and open; otherwise the first problems found (at most 20). */
 export function designProblems(raw: unknown, options: CheckOptions = {}): Problem[] | null {
-  imageCheck = options.allowImage ?? allowedImageSrc;
+  const imageCheck: ImageCheck = options.allowImage ?? allowedImageSrc;
   const out: Problem[] = [];
   let bytes = 0;
   try {
@@ -125,7 +125,7 @@ export function designProblems(raw: unknown, options: CheckOptions = {}): Proble
   if (!Number.isInteger(d.schemaVersion) || (d.schemaVersion as number) < 1 || (d.schemaVersion as number) > SCHEMA_VERSION) out.push({ path: "schemaVersion", reason: "unknown version" });
   if (typeof d.size !== "string" || !Object.hasOwn(SIZES, d.size)) out.push({ path: "size", reason: "unknown size" });
   if (typeof d.background !== "string" || !(COLOR.test(d.background) || imageCheck(d.background))) out.push({ path: "background", reason: "background not allowed" });
-  walk(d.objects, "objects", 0, out, { n: 0 });
+  walk(d.objects, "objects", 0, out, { n: 0 }, imageCheck);
   return out.length ? out.slice(0, 20) : null;
 }
 

@@ -16,7 +16,9 @@ Thank you for helping. · شكراً لمساهمتك.
   · لا مكوّن برخصة «غير تجارية»، وكل مكوّن جديد يُذكر في `NOTICE`.
 - Design files are validated by `src/design.ts`; never widen what an image source may point to without a test.
   · ملفات التصميم تُفحص في `src/design.ts`، ولا تُوسَّع مصادر الصور دون اختبار.
-- By contributing you agree your work is licensed under AGPL-3.0. · مساهمتك تُنشر برخصة AGPL-3.0.
+- **Pull requests from outside contributors are on hold** until a Contributor License Agreement is published here, so the
+  project can stay usable by its copyright holder. Issues, bug reports and ideas are very welcome now.
+  · **طلبات الدمج من خارج المشروع معلّقة** حتى تُنشر هنا اتفاقية مساهمة (CLA). البلاغات والاقتراحات مرحّب بها الآن.
 
 ## Security · الأمان
 Report a vulnerability privately through GitHub's "Report a vulnerability" (Security tab), not in a public issue.

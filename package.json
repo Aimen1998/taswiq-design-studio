@@ -1,18 +1,29 @@
 {
   "name": "@taswiq/design-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TaswiQ Design Studio: product ad designs in the browser (Arabic-first, RTL), with in-browser background removal.",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "repository": { "type": "git", "url": "https://github.com/Aimen1998/taswiq-design-studio.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aimen1998/taswiq-design-studio.git"
+  },
   "homepage": "https://taswiq.store",
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./design": "./src/design.ts",
     "./package.json": "./package.json"
   },
-  "files": ["src", "!src/**/*.test.ts", "LICENSE", "NOTICE", "README.md"],
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",

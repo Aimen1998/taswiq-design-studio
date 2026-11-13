@@ -18,10 +18,10 @@ function Button({ variant = "default", className = "", ...rest }: ButtonHTMLAttr
 function Dialog({ onClose, title, description, className = "", preventClose, children }: { onClose: () => void; title: string; description?: string; className?: string; preventClose?: boolean; children?: ReactNode }) {
   const id = useId();
   const box = useRef<HTMLDivElement>(null);
+  useEffect(() => { box.current?.focus(); }, []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => { if (e.key === "Escape" && !preventClose) onClose(); };
     window.addEventListener("keydown", key);
-    box.current?.focus();
     return () => window.removeEventListener("keydown", key);
   }, [onClose, preventClose]);
   return (
