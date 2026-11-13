@@ -1,0 +1,36 @@
+TaswiQ Design Studio
+Copyright (C) 2026 ABIDAT AIMEN (TaswiQ)
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU Affero General Public License as published by the Free Software Foundation, version 3 (see LICENSE).
+
+It includes or depends on the following third-party components. Each keeps its own license;
+none of them is "non-commercial". Every license below is compatible with AGPL-3.0.
+
+Component                               Use                                         License
+-------------------------------------   -----------------------------------------   ------------
+Fabric.js 6.9.1                         Canvas engine (move, rotate, text, export)   MIT
+  https://github.com/fabricjs/fabric.js
+onnxruntime-web 1.31.1                  Runs the background-removal model (WASM)     MIT
+  https://github.com/microsoft/onnxruntime
+U^2-Net / u2netp model weights          Background removal, in the browser           Apache-2.0
+  (app/public/studio/models/u2netp.onnx)
+  Xuebin Qin et al., "U^2-Net: Going Deeper with Nested U-Structure for Salient Object Detection",
+  Pattern Recognition 2020. https://github.com/xuebinqin/U-2-Net
+  Licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
+  The weights are redistributed unmodified.
+Lucide (lucide-react)                   Every icon in the interface                  ISC
+  https://lucide.dev
+React, React DOM                        User interface                               MIT
+Tailwind CSS (build only)               Styles of the standalone app                 MIT
+Vite, Vitest (build and tests only)     Bundling and tests                           MIT
+
+Fonts (SIL Open Font License 1.1, through the @fontsource packages):
+  Cairo, Tajawal, Changa, Noto Kufi Arabic, Amiri, Inter
+  https://openfontlicense.org — the fonts are used unmodified and are not sold on their own.
+
+Original content of this repository (AGPL-3.0, like the code):
+  - The 15 ad templates, stickers and layouts (src/templates.ts): made for TaswiQ.
+  - The sample product picture (app/public/studio/samples/sample-perfume.webp): drawn for this
+    repository with the canvas API; no third-party photo.
+  - The Arabic, French and English interface texts (src/strings.ts).
