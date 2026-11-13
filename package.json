@@ -1,6 +1,6 @@
 {
   "name": "@taswiq/design-studio",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TaswiQ Design Studio: product ad designs in the browser (Arabic-first, RTL), with in-browser background removal.",
   "license": "AGPL-3.0-only",
   "type": "module",

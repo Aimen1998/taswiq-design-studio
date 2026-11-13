@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps,
 import { ActiveSelection, Canvas, FabricImage, Group, Rect, Textbox, type FabricObject } from "fabric";
 import {
   Heart, MessageCircle, Send, AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, Copy, Download, Expand, Eye, EyeOff, FileImage, Group as GroupIcon, ImagePlus, Layers, LayoutTemplate,
-  Link2, Link2Off, Lock, LockOpen, Maximize, Minus, Package, Palette, PaintBucket, Plus, Redo2, Scissors, Share2, Shapes, Sparkles, Trash2, Type, Undo2, Ungroup, Wand2, X,
+  Link2, Link2Off, Lock, LockOpen, Maximize, Minus, Package, Palette, PaintBucket, Plus, Redo2, Scissors, Search, Share2, Shapes, Sparkles, Trash2, Type, Undo2, Ungroup, Wand2, X,
 } from "lucide-react";
 import { SIZES, FONTS, type SizeId } from "./design";
 import { PHOTO_PLACEHOLDER, useHost, type StudioProduct } from "./context";
@@ -13,6 +13,7 @@ import { TEMPLATE_IDS, buildDesign, money, safeBox, STORY_SAFE, type Brand, type
 import { applyMask, maskCanvas, removeBackground, supported as cutoutSupported, type Stage } from "./bgremove";
 import { loadDesignFonts } from "./fonts";
 import { useS } from "./strings";
+import { TEXT_COMBOS, comboObjects, findStickers, stickerObject } from "./elements";
 
 export type { StudioProduct };
 // The host's own components (TaswiQ passes its design system), resolved at render time.
@@ -79,6 +80,8 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
   const [exportOpen, setExportOpen] = useState(false);
   const [working, setWorking] = useState(false);
   const [tour, setTour] = useState<number | null>(null);
+  const [elQuery, setElQuery] = useState("");
+  const stickers = useMemo(() => findStickers(elQuery), [elQuery]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resolve = useCallback((src: string) => host.assets.resolve(src, signed.current), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [W, H] = SIZES[design.size];
@@ -275,6 +278,12 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
   // ── Actions ───────────────────────────────────────────────────────────────
   function doUndo() { const r = undo(hist, JSON.stringify(current())); if (r.snapshot) { setHist(r.h); void apply(JSON.parse(r.snapshot), { history: false }); } }
   function doRedo() { const r = redo(hist, JSON.stringify(current())); if (r.snapshot) { setHist(r.h); void apply(JSON.parse(r.snapshot), { history: false }); } }
+  async function addMany(os: Obj[]) {
+    const c = cv.current; if (!c) return;
+    await signFor({ ...base.current, objects: os });
+    const made = (await Promise.all(os.map((o) => makeObject(o, resolve)))).filter(Boolean) as FabricObject[];
+    made.forEach((f) => c.add(f)); c.setActiveObject(made[made.length - 1]); c.requestRenderAll(); changed(); setSheet(false);
+  }
   async function add(o: Obj) {
     const c = cv.current; if (!c) return;
     await signFor({ ...base.current, objects: [o] });
@@ -386,16 +395,32 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
           <Button type="button" className="min-h-12 justify-start text-lg font-black" onClick={() => void add({ type: "textbox", text: s("heading_text"), left: W * 0.1, top: H * 0.1, width: W * 0.8, fontFamily: brand.font, fontWeight: 900, fontSize: Math.round(W * 0.075), fill: "#ffffff", textAlign: lang === "ar" ? "right" : "left", direction: lang === "ar" ? "rtl" : "ltr" })}>{s("add_heading")}</Button>
           <Button type="button" variant="outline" className="min-h-12 justify-start" onClick={() => void add({ type: "textbox", text: s("body_text"), left: W * 0.1, top: H * 0.3, width: W * 0.8, fontFamily: brand.font, fontWeight: 700, fontSize: Math.round(W * 0.045), fill: "#ffffff", textAlign: lang === "ar" ? "right" : "left", direction: lang === "ar" ? "rtl" : "ltr" })}>{s("add_body")}</Button>
           <Button type="button" variant="outline" className="min-h-12 justify-start" onClick={() => void add({ type: "textbox", role: "price", bind: "price", text: money(product.price, lang), left: W * 0.1, top: H * 0.7, width: W * 0.6, fontFamily: brand.font, fontWeight: 900, fontSize: Math.round(W * 0.09), fill: "#ffffff", textAlign: lang === "ar" ? "right" : "left", direction: lang === "ar" ? "rtl" : "ltr" })}><Link2 className="size-4" aria-hidden /> {s("add_price")}</Button>
+          <p className="mt-2 font-bold">{s("combos")}</p>
+          <div className="grid gap-2" data-studio-combos>
+            {TEXT_COMBOS.map((c) => (
+              <button key={c.id} type="button" className={`grid gap-0.5 rounded-xl border border-border p-3 text-start ${c.look === "light" ? "bg-card" : ""}`} style={c.look === "light" ? undefined : { background: c.look === "dark" ? "#111827" : brand.primary, color: "#fff" }}
+                onClick={() => void addMany(comboObjects(c, brand, lang, money(product.price, lang), W, H))} data-combo={c.id}>
+                <b className="text-lg leading-tight" style={{ fontFamily: c.font }}>{c.headline[lang]}</b>
+                <span className="text-sm opacity-80">{c.line[lang]}</span>
+              </button>
+            ))}
+          </div>
         </div>
       );
       case "elements": return (
         <div className="grid gap-3">
-          <p className="font-bold">{s("stickers")}</p>
-          <div className="flex flex-wrap gap-2">
-            {(["st_sale", "st_free", "st_cod", "st_limited", "st_new"] as const).map((k, i) => (
-              <button key={k} type="button" className="min-h-11 rounded-full px-4 text-sm font-black" style={{ background: i === 0 ? brand.accent : brand.primary, color: i === 0 ? "#1f1300" : "#fff" }}
-                onClick={() => { const w = Math.round(W * 0.42), h = Math.round(W * 0.08); void add({ type: "group", role: "badge", left: (W - w) / 2, top: H * 0.15, objects: [{ type: "rect", width: w, height: h, rx: h / 2, ry: h / 2, fill: i === 0 ? brand.accent : brand.primary }, { type: "textbox", text: s(k), width: w, top: h * 0.2, fontFamily: brand.font, fontWeight: 900, fontSize: Math.round(h * 0.45), fill: i === 0 ? "#1f1300" : "#ffffff", textAlign: "center" }] }); }}>{s(k)}</button>
-            ))}
+          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3">
+            <Search className="size-4 text-muted-foreground" aria-hidden />
+            <input type="search" value={elQuery} onChange={(e) => setElQuery(e.currentTarget.value)} placeholder={s("el_search")} aria-label={s("el_search")} className="min-w-0 flex-1 bg-transparent text-base outline-none" data-studio-el-search />
+          </label>
+          <p className="font-bold">{s("stickers")} <span className="text-xs font-normal text-muted-foreground">({stickers.length})</span></p>
+          <div className="flex flex-wrap gap-2" data-studio-stickers>
+            {stickers.map((st) => {
+              const look = st.tone === "accent" ? { background: brand.accent, color: "#1f1300" } : st.tone === "red" ? { background: "#dc2626", color: "#fff" } : st.tone === "dark" ? { background: "#111827", color: "#fff" } : st.tone === "light" ? { background: "#fff", color: brand.primary, border: `2px solid ${brand.primary}` } : { background: brand.primary, color: "#fff" };
+              const shape = st.style === "seal" ? "rounded-full aspect-square px-2" : st.style === "pill" ? "rounded-full px-4" : st.style === "ribbon" ? "-rotate-3 px-4" : "rounded-lg px-4";
+              return <button key={st.id} type="button" className={`min-h-11 text-sm font-black ${shape}`} style={st.style === "outline" ? { background: "#fff", color: look.background as string, border: `2px solid ${look.background}` } : look} onClick={() => void add(stickerObject(st, brand, lang, W, H))} data-sticker={st.id}>{st.text[lang]}</button>;
+            })}
+            {!stickers.length && <p className="text-sm text-muted-foreground">{s("el_none")}</p>}
           </div>
           <p className="font-bold">{s("shapes")}</p>
           <div className="flex flex-wrap gap-2">

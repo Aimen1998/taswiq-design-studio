@@ -48,3 +48,23 @@ test("the landing page opens the editor", async ({ page }) => {
   await page.locator("a[href='/editor/']").first().click();
   await expect(page.locator("[data-studio-instant] img").first()).toBeVisible();
 });
+
+test("40 stickers with search, and ready text combinations add to the design", async ({ page, isMobile }) => {
+  test.skip(isMobile, "the side panels are the desktop layout");
+  await openEditor(page);
+  await page.locator("[data-studio-tab=elements]").click();
+  await expect(page.locator("[data-sticker]")).toHaveCount(40);
+  await page.locator("[data-studio-el-search]").fill("توصيل");
+  const found = await page.locator("[data-sticker]").count();
+  expect(found).toBeGreaterThanOrEqual(2);
+  expect(found).toBeLessThan(40);
+  const before = await canvasHash(page);
+  await page.locator("[data-sticker]").first().click();
+  await expect.poll(() => canvasHash(page)).not.toBe(before);
+  await page.locator("[data-studio-tab=text]").click();
+  await expect(page.locator("[data-combo]")).toHaveCount(20);
+  const mid = await canvasHash(page);
+  await page.locator("[data-combo=t05]").click();
+  await expect.poll(() => canvasHash(page)).not.toBe(mid);
+  await expect(page.locator("[data-studio-status]")).toHaveAttribute("data-studio-status", "saved", { timeout: 10_000 });
+});
