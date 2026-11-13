@@ -1,6 +1,6 @@
 name: CLA
 # Every pull request needs its author's signature on CLA.md (once per person). Signatures are kept in this
-# repository on the branch "cla-signatures" (signatures/version1/cla.json). Runs on pull_request_target so it can
+# repository on the branch "cla-signatures" (signatures/version1.1/cla.json). Runs on pull_request_target so it can
 # comment on pull requests from forks; it never checks out or runs the pull request's code.
 on:
   issue_comment:

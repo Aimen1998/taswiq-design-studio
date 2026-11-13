@@ -27,9 +27,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: site
-          path: |
-            dist
-            wrangler.jsonc
+          path: dist
           include-hidden-files: true
           retention-days: 3
   deploy:
@@ -42,10 +40,24 @@ jobs:
     steps:
       - name: Secrets present?
         run: echo "deploy=$HAS_TOKEN"
+      # The deploy config comes from the repository at this exact commit, never from the build job's output.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        if: env.HAS_TOKEN == 'true'
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: wrangler.jsonc
+          sparse-checkout-cone-mode: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: env.HAS_TOKEN == 'true'
         with:
           name: site
+          path: dist
+      - name: Static files only
+        if: env.HAS_TOKEN == 'true'
+        run: |
+          test -f dist/index.html
+          if [ -e dist/_worker.js ] || [ -d dist/_worker.js ] || [ -e dist/functions ]; then echo "refusing: server code in dist"; exit 1; fi
+          if grep -q '"main"' wrangler.jsonc; then echo "refusing: wrangler.jsonc has a main script"; exit 1; fi
       - name: Publish
         if: env.HAS_TOKEN == 'true'
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3.15.0
@@ -53,7 +65,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4.125.0"
-          command: deploy
+          command: deploy --name taswiq-design-studio
       - name: Check the live site
         if: env.HAS_TOKEN == 'true' && env.STUDIO_URL != ''
         run: |
