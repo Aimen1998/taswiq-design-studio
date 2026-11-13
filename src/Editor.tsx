@@ -5,9 +5,9 @@ import {
   Link2, Link2Off, Lock, LockOpen, Maximize, Minus, Package, Palette, PaintBucket, Plus, Redo2, Scissors, Share2, Shapes, Sparkles, Trash2, Type, Undo2, Ungroup, Wand2, X,
 } from "lucide-react";
 import { SIZES, FONTS, type SizeId } from "./design";
-import { useHost, type StudioProduct } from "./context";
+import { PHOTO_PLACEHOLDER, useHost, type StudioProduct } from "./context";
 import type { UiKit } from "./ui";
-import { applyZoom, cssFont, designFont, drawDesign, exportDesign, fitZoom, makeObject, readDesign, renderThumb, snap } from "./canvas";
+import { applyZoom, cssFont, designFont, drawDesign, refreshText, exportDesign, fitZoom, makeObject, readDesign, renderThumb, snap } from "./canvas";
 import { autoFix, convertSize, canUndo, placementWarnings, readabilityWarnings, record, redo, syncBindings, undo, unlink, type Design, type History, type Obj } from "./model";
 import { TEMPLATE_IDS, buildDesign, money, safeBox, STORY_SAFE, type Brand, type Lang, type ProductInfo, type TemplateId } from "./templates";
 import { applyMask, maskCanvas, removeBackground, supported as cutoutSupported, type Stage } from "./bgremove";
@@ -208,8 +208,12 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
     c.on("selection:cleared", () => setSel(null));
     c.on("object:moving", (e) => setGuides(snap(e.target, base.current.size, 10 / c.getZoom())));
     c.on("mouse:up", () => setGuides([]));
+    // Double-tap on the empty photo frame opens the picture picker.
+    c.on("mouse:dblclick", (e: any) => { const t = e?.target; if (t instanceof FabricImage && (t as any).meta?.src === PHOTO_PLACEHOLDER) photoInput.current?.click(); });
     c.on("text:editing:entered", () => { const t = c.getActiveObject(); if (t instanceof Textbox) { t.selectAll(); c.requestRenderAll(); } });
-    void loadDesignFonts().then(() => apply(initial, { history: true, save: false }));
+    // Draw the design at once (never a white canvas on a slow connection), then re-measure the text when the fonts arrive.
+    void apply(initial, { history: true, save: false });
+    void loadDesignFonts().catch(() => {}).then(() => { if (cv.current) refreshText(cv.current); });
     try { if (window.localStorage.getItem(TOUR_KEY) !== "1") setTour(0); } catch {}
     return () => { c.dispose(); cv.current = null; if (retryTimer.current) clearTimeout(retryTimer.current); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -347,6 +351,7 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
     else { save(file, file.name); notify.success(s("wa_hint")); window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener"); }
   });
   const downloadMain = () => run(async () => { await signFor(current()); save(await exportDesign(current(), resolve, "png"), fileName(design.size, "png")); notify.success(s("ex_downloaded")); setExportOpen(false); });
+  const usesPlaceholder = useMemo(() => { const walk = (os: Obj[]): boolean => os.some((o) => o.src === PHOTO_PLACEHOLDER || (Array.isArray(o.objects) && walk(o.objects))); return walk(design.objects); }, [design]);
   const usesSample = useMemo(() => { const walk = (os: Obj[]): boolean => os.some((o) => (typeof o.src === "string" && o.src.startsWith("/studio/samples/")) || (Array.isArray(o.objects) && walk(o.objects))); return walk(design.objects); }, [design]);
   async function putOwnPhoto(file: File) {
     await run(async () => {
@@ -476,7 +481,7 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
           </div>
           {usesSample && (
             <div className="absolute inset-x-2 bottom-[6rem] z-10 mx-auto flex max-w-md flex-wrap items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-bold text-sky-950 shadow lg:bottom-16" data-studio-sample>
-              <span>{s("sample_badge")}</span>
+              <span>{usesPlaceholder ? s("photo_missing_badge") : s("sample_badge")}</span>
               <button type="button" className="min-h-11 rounded-full bg-brand px-4 font-black text-white" onClick={() => photoInput.current?.click()} disabled={working}><ImagePlus className="me-1 inline size-4" aria-hidden />{s("sample_add")}</button>
               <input ref={photoInput} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => { const f = e.currentTarget.files?.[0]; e.currentTarget.value = ""; if (f) void putOwnPhoto(f); }} />
             </div>
@@ -523,7 +528,7 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
       {exportOpen && (
         <Dialog onClose={() => !working && setExportOpen(false)} title={s("export")} description={working ? s("ex_working") : undefined}>
           <div className="grid gap-2" data-studio-export-menu>
-            {usesSample && <p role="note" className="rounded-xl bg-sky-50 p-3 text-sm font-semibold text-sky-950">{s("sample_export")} <button type="button" className="min-h-11 font-black underline" onClick={() => { setExportOpen(false); photoInput.current?.click(); }}>{s("sample_add")}</button></p>}
+            {usesSample && <p role="note" className="rounded-xl bg-sky-50 p-3 text-sm font-semibold text-sky-950">{usesPlaceholder ? s("photo_missing_export") : s("sample_export")} <button type="button" className="min-h-11 font-black underline" onClick={() => { setExportOpen(false); photoInput.current?.click(); }}>{s("sample_add")}</button></p>}
             <Button type="button" className="min-h-14 justify-center text-base font-black" disabled={working} onClick={() => void downloadMain()} data-studio-download><Download className="size-5" aria-hidden /> {s("ex_download")}</Button>
             <Button type="button" variant="outline" className="min-h-12 justify-start" disabled={working} onClick={() => void share()}><Share2 className="size-4" aria-hidden /> {s("ex_whatsapp")}</Button>
             <Button type="button" variant="outline" className="min-h-12 justify-start sm:hidden" disabled={working} onClick={() => { setExportOpen(false); void openPreview(); }}><Expand className="size-4" aria-hidden /> {s("preview")}</Button>

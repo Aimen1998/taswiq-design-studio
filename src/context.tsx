@@ -6,6 +6,9 @@ import { DefaultUi, type UiKit } from "./ui";
 /** A product the studio can design for. `id: null` is a sample; `sample: true` marks a stand-in photo. */
 export type StudioProduct = ProductInfo & { id: string | null; sample?: boolean };
 
+/** The empty frame («put your product photo here») a host serves for a product with no photo yet. */
+export const PHOTO_PLACEHOLDER = "/studio/samples/placeholder.webp";
+
 export type DesignRow = { id: string; name: string; size: string; thumb: string | null; updatedAt: string; openedAt?: string; cleanupWarnedAt?: string | null };
 
 /**

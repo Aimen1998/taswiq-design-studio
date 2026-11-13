@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Copy, LayoutTemplate, Plus, Search, Trash2, Zap } from "lucide-react";
 import { SIZES, type SizeId } from "./design";
-import { useHost, type DesignRow, type StudioProduct } from "./context";
+import { PHOTO_PLACEHOLDER, useHost, type DesignRow, type StudioProduct } from "./context";
 import { renderThumb } from "./canvas";
 import { Editor } from "./Editor";
 import { loadDesignFonts } from "./fonts";
@@ -112,7 +112,7 @@ export function Studio() {
             </label>
           </div>
           {host.products && !products.some((p) => p.id) && <p className="text-sm text-muted-foreground">{s("no_products")}</p>}
-          {product.sample && product.id && <p role="note" className="rounded-xl bg-sky-50 p-3 text-sm font-semibold text-sky-950" data-studio-sample-note>{s("sample_start")}</p>}
+          {product.sample && product.id && <p role="note" className="rounded-xl bg-sky-50 p-3 text-sm font-semibold text-sky-950" data-studio-sample-note>{product.image === PHOTO_PLACEHOLDER ? s("photo_missing_start") : s("sample_start")}</p>}
           <div className="grid gap-3 sm:grid-cols-3" data-studio-instant>
             {three.map((d, i) => (
               <button key={i} type="button" onClick={() => setOpen({ design: d as Design, id: null, name: `${product.name}` })} className="group grid gap-2 rounded-2xl border border-border bg-card p-2 text-start hover:border-brand focus-visible:outline-2 focus-visible:outline-brand">

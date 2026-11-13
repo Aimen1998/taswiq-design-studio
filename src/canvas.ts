@@ -3,7 +3,7 @@
  * reads it back with the allowed properties only (so a saved file always passes the check in design.ts),
  * snaps elements to the safe margins and the centre with visible guides, and handles zoom and pinch.
  */
-import { ActiveSelection, Canvas, Circle, FabricImage, Gradient, Group, Rect, Shadow, StaticCanvas, Textbox, util, type FabricObject } from "fabric";
+import { ActiveSelection, Canvas, Circle, FabricImage, Gradient, Group, Rect, Shadow, StaticCanvas, Textbox, cache, util, type FabricObject } from "fabric";
 import { SIZES, type SizeId } from "./design";
 import type { Design, Obj } from "./model";
 import { safeBox } from "./templates";
@@ -140,6 +140,17 @@ export async function drawDesign(canvas: Canvas | StaticCanvas, d: Design, resol
   canvas.clear();
   canvas.backgroundColor = backgroundFill(d.background, d.size) as any;
   objs.forEach((o) => canvas.add(o));
+  canvas.requestRenderAll();
+}
+
+/** Re-measures every text once the design fonts arrive: the design is drawn at once, never a white canvas while fonts load. */
+export function refreshText(canvas: Canvas | StaticCanvas) {
+  cache.clearFontCache();
+  const walk = (objs: FabricObject[]) => objs.forEach((o) => {
+    if (o instanceof Textbox) { o.initDimensions(); o.setCoords(); }
+    else if (o instanceof Group) { walk(o.getObjects()); (o as any).triggerLayout?.(); o.setCoords(); }
+  });
+  walk(canvas.getObjects());
   canvas.requestRenderAll();
 }
 
