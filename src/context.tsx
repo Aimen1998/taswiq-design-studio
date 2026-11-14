@@ -35,6 +35,10 @@ export interface AssetStore {
   resolve(src: string, signed: Record<string, string>): string;
   /** How long a signed link lives; links are renewed before that. Default 45 minutes. */
   renewAfterMs?: number;
+  /** «My uploads»: the merchant's pictures, newest first (optional; the tab shows only when present). */
+  list?(): Promise<Array<{ key: string; url: string; bytes?: number; createdAt?: string }>>;
+  /** Deletes one picture from «My uploads» (the merchant's own choice). */
+  remove?(key: string): Promise<void>;
 }
 
 export interface ProductSource {

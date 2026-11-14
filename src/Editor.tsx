@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps,
 import { ActiveSelection, Canvas, FabricImage, Group, Rect, Textbox, type FabricObject } from "fabric";
 import {
   Heart, MessageCircle, Send, AlignCenter, AlignLeft, AlignRight, ArrowDown, ArrowLeft, ArrowUp, Copy, Download, Expand, Eye, EyeOff, FileImage, Group as GroupIcon, ImagePlus, Layers, LayoutTemplate,
-  Link2, Link2Off, Lock, LockOpen, Maximize, Minus, Package, Palette, PaintBucket, Plus, Redo2, Scissors, Search, Share2, Shapes, Sparkles, Trash2, Type, Undo2, Ungroup, Wand2, X,
+  Link2, Link2Off, Lock, LockOpen, Maximize, Minus, Package, Palette, PaintBucket, Plus, Redo2, Scissors, Search, Share2, Images, Upload, Shapes, Sparkles, Trash2, Type, Undo2, Ungroup, Wand2, X,
 } from "lucide-react";
 import { SIZES, FONTS, type SizeId } from "./design";
 import { PHOTO_PLACEHOLDER, useHost, type StudioProduct } from "./context";
@@ -20,9 +20,9 @@ export type { StudioProduct };
 const Button = (p: ComponentProps<UiKit["Button"]>) => { const C = useHost().ui.Button; return <C {...p} />; };
 const Dialog = (p: ComponentProps<UiKit["Dialog"]>) => { const C = useHost().ui.Dialog; return <C {...p} />; };
 const Select = (p: ComponentProps<UiKit["Select"]>) => { const C = useHost().ui.Select; return <C {...p} />; };
-type Tab = "templates" | "products" | "text" | "elements" | "background" | "brand" | "cutout" | "ai" | "layers";
+type Tab = "templates" | "uploads" | "products" | "text" | "elements" | "background" | "brand" | "cutout" | "ai" | "layers";
 const TABS: Array<{ id: Tab; icon: typeof Type; key: Parameters<ReturnType<typeof useS>>[0] }> = [
-  { id: "templates", icon: LayoutTemplate, key: "rail_templates" }, { id: "products", icon: Package, key: "rail_products" }, { id: "text", icon: Type, key: "rail_text" },
+  { id: "templates", icon: LayoutTemplate, key: "rail_templates" }, { id: "uploads", icon: Images, key: "rail_uploads" }, { id: "products", icon: Package, key: "rail_products" }, { id: "text", icon: Type, key: "rail_text" },
   { id: "elements", icon: Shapes, key: "rail_elements" }, { id: "background", icon: PaintBucket, key: "rail_background" }, { id: "brand", icon: Palette, key: "rail_brand" },
   { id: "cutout", icon: Scissors, key: "rail_cutout" }, { id: "ai", icon: Sparkles, key: "rail_ai" }, { id: "layers", icon: Layers, key: "rail_layers" },
 ];
@@ -51,7 +51,7 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
   const host = useHost();
   const notify = host.notify;
   const locale = host.locale as Lang;
-  const tabs = TABS.filter((t) => (t.id !== "ai" || host.ai) && (t.id !== "products" || host.products));
+  const tabs = TABS.filter((t) => (t.id !== "ai" || host.ai) && (t.id !== "products" || host.products) && (t.id !== "uploads" || host.assets.list));
   const lang: Lang = locale === "fr" || locale === "en" ? locale : "ar";
   const canvasEl = useRef<HTMLCanvasElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -379,6 +379,7 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
   const panel = (() => {
     switch (tab) {
       case "templates": return <TemplatesPanel size={design.size} brand={brand} product={product} lang={lang} resolve={resolve} onPick={(t) => void useTemplate(t)} />;
+      case "uploads": return <UploadsPanel onUse={(key, url) => { signed.current[key] = url; void add({ type: "image", src: key, left: W * 0.25, top: H * 0.25, width: W * 0.5, height: W * 0.5 }); }} />;
       case "products": return (
         <div className="grid gap-2">
           <p className="text-sm text-muted-foreground">{s("products_hint")}</p>
@@ -809,5 +810,69 @@ function PreviewDialog({ img, size, storeName, onClose, s }: { img: string; size
         </div>
       )}
     </Dialog>
+  );
+}
+
+/** «My uploads»: upload (button, drag-and-drop, paste), then tap a picture to put it in the design. */
+function UploadsPanel({ onUse }: { onUse: (key: string, url: string) => void }) {
+  const s = useS();
+  const host = useHost();
+  const [items, setItems] = useState<Array<{ key: string; url: string }> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [armed, setArmed] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const load = useCallback(() => { void host.assets.list?.().then((l) => setItems(l)).catch(() => setItems([])); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(load, [load]);
+  async function upload(files: File[]) {
+    const pics = files.filter((f) => /^image\//.test(f.type) || /\.(png|jpe?g|webp)$/i.test(f.name)).slice(0, 20);
+    if (!pics.length) return;
+    setBusy(true);
+    let failed = 0;
+    for (const f of pics) {
+      try { const up = await host.assets.upload(f); setItems((all) => [{ key: up.key, url: up.url }, ...(all ?? [])]); }
+      catch (e: any) { failed++; host.notify.error(e?.status === 413 || e?.status === 422 ? s("photo_too_big") : e?.status === 503 ? s("cutout_bucket") : s("photo_wrong_type")); }
+    }
+    setBusy(false);
+    if (pics.length - failed > 0) host.notify.success(s("uploads_done"));
+  }
+  // Paste (⌘V / Ctrl+V) anywhere in the editor while this tab is open.
+  useEffect(() => {
+    const paste = (e: ClipboardEvent) => {
+      if ((e.target as HTMLElement)?.closest?.("input, textarea, [contenteditable]")) return;
+      const files = [...(e.clipboardData?.files ?? [])];
+      if (files.length) { e.preventDefault(); void upload(files); }
+    };
+    window.addEventListener("paste", paste);
+    return () => window.removeEventListener("paste", paste);
+  });
+  async function remove(key: string) {
+    if (armed !== key) { setArmed(key); setTimeout(() => setArmed((k) => (k === key ? null : k)), 4000); return; }
+    setArmed(null);
+    try { await host.assets.remove?.(key); setItems((all) => (all ?? []).filter((x) => x.key !== key)); }
+    catch { host.notify.error(s("save_failed")); }
+  }
+  return (
+    <div className={`grid gap-3 rounded-xl ${over ? "outline-2 outline-dashed outline-brand" : ""}`} data-studio-uploads
+      onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
+      onDrop={(e) => { e.preventDefault(); setOver(false); void upload([...e.dataTransfer.files]); }}>
+      <button type="button" disabled={busy} onClick={() => input.current?.click()} className="grid min-h-24 place-items-center gap-1 rounded-2xl border-2 border-dashed border-brand/50 bg-brand/5 p-4 text-center font-black text-brand disabled:opacity-60" data-studio-upload-button>
+        <Upload className="size-6" aria-hidden />{busy ? s("uploads_busy") : s("uploads_cta")}
+        <span className="text-xs font-semibold text-muted-foreground">{s("uploads_hint")}</span>
+      </button>
+      <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" multiple className="hidden" onChange={(e) => { const f = [...(e.currentTarget.files ?? [])]; e.currentTarget.value = ""; void upload(f); }} data-studio-upload-input />
+      {items === null ? <p className="text-sm text-muted-foreground">…</p> : !items.length ? <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">{s("uploads_empty")}</p> : (
+        <ul className="grid grid-cols-3 gap-2" data-studio-upload-list>
+          {items.map((it) => (
+            <li key={it.key} className="relative">
+              <button type="button" className="block aspect-square w-full overflow-hidden rounded-xl border border-border bg-muted" onClick={() => onUse(it.key, it.url)} aria-label={s("uploads_use")} data-studio-upload-item>
+                <img src={it.url} alt="" loading="lazy" crossOrigin="anonymous" className="size-full object-cover" />
+              </button>
+              {host.assets.remove && <button type="button" onClick={() => void remove(it.key)} className={`absolute end-1 top-1 grid min-h-8 min-w-8 place-items-center rounded-full px-1.5 text-xs font-bold shadow ${armed === it.key ? "bg-red-600 text-white" : "bg-card"}`} aria-label={s("delete")}>{armed === it.key ? s("uploads_confirm") : <Trash2 className="size-4" />}</button>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -68,3 +68,19 @@ test("40 stickers with search, and ready text combinations add to the design", a
   await expect.poll(() => canvasHash(page)).not.toBe(mid);
   await expect(page.locator("[data-studio-status]")).toHaveAttribute("data-studio-status", "saved", { timeout: 10_000 });
 });
+
+test("«My uploads»: upload pictures, put one in the design, delete with a second tap", async ({ page, isMobile }) => {
+  test.skip(isMobile, "the side panels are the desktop layout");
+  await openEditor(page);
+  await page.locator("[data-studio-tab=uploads]").click();
+  await page.locator("[data-studio-upload-input]").setInputFiles(["app/public/studio/samples/sample-perfume.webp", "app/public/hero-ad.webp"]);
+  await expect(page.locator("[data-studio-upload-item]")).toHaveCount(2);
+  const before = await canvasHash(page);
+  await page.locator("[data-studio-upload-item]").first().click();
+  await expect.poll(() => canvasHash(page)).not.toBe(before);
+  const del = page.locator("[data-studio-upload-list] li").first().locator("button").last();
+  await del.click();
+  await expect(page.locator("[data-studio-upload-item]")).toHaveCount(2);
+  await del.click();
+  await expect(page.locator("[data-studio-upload-item]")).toHaveCount(1);
+});

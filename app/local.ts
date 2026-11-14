@@ -5,7 +5,7 @@ import { designProblems, type Design } from "../src";
 const DB = "design-studio";
 const VERSION = 1;
 type DesignRecord = DesignRow & { doc: Design };
-type AssetRecord = { key: string; blob: Blob; bytes: number };
+type AssetRecord = { key: string; blob: Blob; bytes: number; at?: number };
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -110,7 +110,7 @@ export const localAssets: AssetStore = {
     bitmap.close();
     if (big) throw Object.assign(new Error("Picture too big in pixels"), { status: 422 });
     const key = `studio:local/${hex(16)}.${ext}`;
-    await tx("assets", "readwrite", (s) => s.put({ key, blob, bytes: blob.size } satisfies AssetRecord));
+    await tx("assets", "readwrite", (s) => s.put({ key, blob, bytes: blob.size, at: Date.now() } satisfies AssetRecord));
     const url = URL.createObjectURL(blob);
     urls.set(key, url);
     return { key, url };
@@ -128,6 +128,17 @@ export const localAssets: AssetStore = {
     return out;
   },
   resolve: (src, signed) => (src.startsWith("studio:") ? signed[src] ?? urls.get(src) ?? "" : src),
+  async list() {
+    const all = await tx<AssetRecord[]>("assets", "readonly", (st) => st.getAll());
+    return all.sort((x, y) => (y.at ?? 0) - (x.at ?? 0)).map((r) => {
+      if (!urls.has(r.key)) urls.set(r.key, URL.createObjectURL(r.blob));
+      return { key: r.key, url: urls.get(r.key)!, bytes: r.bytes };
+    });
+  },
+  async remove(key) {
+    await tx("assets", "readwrite", (st) => st.delete(key));
+    const u = urls.get(key); if (u) { URL.revokeObjectURL(u); urls.delete(key); }
+  },
   renewAfterMs: 24 * 3600_000,
 };
 
