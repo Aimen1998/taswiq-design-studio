@@ -825,8 +825,10 @@ function UploadsPanel({ onUse }: { onUse: (key: string, url: string) => void }) 
   const load = useCallback(() => { void host.assets.list?.().then((l) => setItems(l)).catch(() => setItems([])); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(load, [load]);
   async function upload(files: File[]) {
+    if (busyRef.current) return;
+    busyRef.current = true;
     const pics = files.filter((f) => /^image\//.test(f.type) || /\.(png|jpe?g|webp)$/i.test(f.name)).slice(0, 20);
-    if (!pics.length) return;
+    if (!pics.length) { busyRef.current = false; return; }
     setBusy(true);
     let failed = 0;
     for (const f of pics) {
@@ -836,16 +838,22 @@ function UploadsPanel({ onUse }: { onUse: (key: string, url: string) => void }) 
     setBusy(false);
     if (pics.length - failed > 0) host.notify.success(s("uploads_done"));
   }
-  // Paste (⌘V / Ctrl+V) anywhere in the editor while this tab is open.
+  // Paste (⌘V / Ctrl+V) anywhere in the editor while this tab is open: one listener, and never two uploads at once.
+  const uploadRef = useRef(upload);
+  uploadRef.current = upload;
+  const busyRef = useRef(false);
+  busyRef.current = busy;
   useEffect(() => {
     const paste = (e: ClipboardEvent) => {
       if ((e.target as HTMLElement)?.closest?.("input, textarea, [contenteditable]")) return;
       const files = [...(e.clipboardData?.files ?? [])];
-      if (files.length) { e.preventDefault(); void upload(files); }
+      if (!files.length) return;
+      e.preventDefault();
+      if (!busyRef.current) void uploadRef.current(files);
     };
     window.addEventListener("paste", paste);
     return () => window.removeEventListener("paste", paste);
-  });
+  }, []);
   async function remove(key: string) {
     if (armed !== key) { setArmed(key); setTimeout(() => setArmed((k) => (k === key ? null : k)), 4000); return; }
     setArmed(null);
