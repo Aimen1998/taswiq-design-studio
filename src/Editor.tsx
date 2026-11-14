@@ -448,7 +448,7 @@ export function Editor({ initial, designId: startId, name: startName, brand, pro
         </div>
       );
       case "cutout": return <CutoutPanel selected={sel} resolve={resolve} onDone={async (key, url) => { signed.current[key] = url; const o = cv.current?.getActiveObject(); if (o instanceof FabricImage) { await o.setSrc(url, { crossOrigin: "anonymous" }); (o as any).meta = { ...(o as any).meta, src: key, bind: undefined }; cv.current!.requestRenderAll(); changed(); } }} />;
-      case "ai": return <AiPanel product={product} onApply={(c) => { const d = current(); void apply({ ...d, objects: d.objects.map((o) => o.role === "headline" ? { ...o, text: c.headline } : o.role === "line" && !o.bind && !String(o.text ?? "").startsWith("💵") ? { ...o, text: c.line } : o.role === "cta" && Array.isArray(o.objects) ? { ...o, objects: o.objects.map((x: Obj) => (x.type === "textbox" ? { ...x, text: c.cta } : x)) } : o) }); }} />;
+      case "ai": return <AiPanel product={product} onApply={(c) => { const d = current(); void apply({ ...d, objects: d.objects.map((o) => o.role === "headline" && c.headline ? { ...o, text: c.headline } : o.role === "line" && c.line && !o.bind && !String(o.text ?? "").startsWith("💵") ? { ...o, text: c.line } : o.role === "cta" && c.cta && Array.isArray(o.objects) ? { ...o, objects: o.objects.map((x: Obj) => (x.type === "textbox" ? { ...x, text: c.cta } : x)) } : o) }); }} />;
       case "layers": return (
         <ul className="grid gap-1" aria-label={s("rail_layers")}>
           {!cv.current?.getObjects().length && <li className="text-sm text-muted-foreground">{s("empty_layers")}</li>}
@@ -850,6 +850,7 @@ function UploadsPanel({ onUse }: { onUse: (key: string, url: string) => void }) 
       if (!files.length) return;
       e.preventDefault();
       if (!busyRef.current) void uploadRef.current(files);
+      else host.notify.error(s("uploads_wait"));
     };
     window.addEventListener("paste", paste);
     return () => window.removeEventListener("paste", paste);
